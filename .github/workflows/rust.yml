@@ -1,3 +1,5 @@
+# source: https://gist.github.com/sbeckeriv/849774ee19f23aaaf9d5197ddbe97474
+
 name: Rust
 
 on:
@@ -8,18 +10,75 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - run: rustup component add rustfmt
+      - run: cargo fmt -- --check
 
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Cache Rust dependencies
+        uses: actions/cache@v1.0.1
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+      - name: Install latest rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: beta
+          default: true
+          override: true
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update \
+          && sudo apt-get install -y \
+          libdbus-1-dev
+      - name: Build
+        run: cargo build --all --release && strip target/release/hello-rust #&& mv target/release/#{your taget here bin}  target/release/hello-rust
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/hello-rust
+          asset_name: hello-rust-${{ github.ref }}-${{ runner.OS }}
+          tag: build-${{ github.ref }}
+          overwrite: true
+
+  build-mac:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --release --verbose
-    - name: Run tests
-      run: cargo test --verbose
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v3.1.0
-      with:
-        path: target/release/hello-rust
-        tag: build-${{ github.ref }}
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Cache Rust dependencies
+        uses: actions/cache@v1.0.1
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+      - name: Install latest rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: beta
+          target: x86_64-apple-darwin
+          default: true
+          override: true
+      - name: Build for mac
+        run: cargo build --all --release && strip target/release/rust-aha-cli && mv target/release/rust-aha-cli target/release/hello-rust
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/hello-rust
+          asset_name: hello-rust-${{ github.ref }}-${{ runner.OS }}
+          tag: build-${{ github.ref }}
+          overwrite: true
