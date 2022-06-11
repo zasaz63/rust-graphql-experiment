@@ -10,12 +10,12 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  rustfmt:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - run: rustup component add rustfmt
-      - run: cargo fmt -- --check
+#  rustfmt:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v1
+#      - run: rustup component add rustfmt
+#      - run: cargo fmt -- --check
 
   build:
     runs-on: ubuntu-latest
@@ -73,7 +73,7 @@ jobs:
           default: true
           override: true
       - name: Build for mac
-        run: cargo build --all --release && strip target/release/rust-aha-cli && mv target/release/rust-aha-cli target/release/hello-rust
+        run: cargo build --all --release && strip target/release/hello-rust #&& mv target/release/#{your taget here bin}  target/release/hello-rust
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v1-release
         with:
